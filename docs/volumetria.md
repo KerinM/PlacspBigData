@@ -52,17 +52,34 @@ Fórmula: `Volumen = Nº Filas x Longitud media + 40% índices`
 ### 3.1 Interpretación
 
 - En **Parquet** los datos ocupan solo **1,1 GB** (comprimido por columnas).
-- En **PostgreSQL** ocupan **~17,4 GB** por el factor de llenado, cabeceras de filas, `TOAST` y, sobre todo, los **índices**.
-- Con índices adicionales o replicas el tamaño puede crecer hasta **~23 GB a 5 años**.
+- En **PostgreSQL** ocupan **~17,4 GB** por el factor de llenado, cabeceras de fila, `TOAST` y, sobre todo, los **índices**.
+- Con índices adicionales o réplicas el tamaño puede crecer hasta **~23 GB a 5 años**.
+
+### 3.2 Volumetría real medida (carga de 2026)
+
+Volumen real una vez cargados los datasets limpios en PostgreSQL 18 (`pg_total_relation_size`):
+
+| Tabla | Filas | Tamaño total |
+|---|---|---|
+| subvenciones_raisc | 9.630.023 | 9,0 GB |
+| licitaciones (PLACSP) | 8.693.891 | 7,4 GB |
+| publicaciones_pscp | 1.607.361 | 2,0 GB |
+| contratos_registro | 3.453.519 | 1,5 GB |
+| contractacio_menors | 3.023.802 | 1,2 GB |
+| valencia_contratacion | 245.545 | 224 MB |
+| adjudicaciones_generalitat | 73.895 | 38 MB |
+| **TOTAL** | **26,7M** | **~21,4 GB** |
+
+Las estimaciones de la tabla 3.1 (~17,4 GB) se ajustan razonablemente a la medición real (~21,4 GB); la diferencia se debe a las columnas de tipo `text` sin comprimir y a los índices de texto.
 
 ## 4. Índices y particionado
 
 ### 4.1 Índices recomendados
 
 ```sql
-CREATE INDEX idx_organo       ON licitaciones(organo_contratante);
+CREATE INDEX idx_organo        ON licitaciones(organo_contratante);
 CREATE INDEX idx_adjudicatario ON licitaciones(nif_adjudicatario);
-CREATE INDEX idx_fecha        ON licitaciones(fecha_publicacion);
+CREATE INDEX idx_fecha         ON licitaciones(fecha_publicacion);
 ```
 
 Los dos primeros aceleran los análisis de fraude (agrupación por NIF u órgano) y el de fecha es clave para consultas temporales.
@@ -87,18 +104,18 @@ CREATE TABLE licitaciones_2013 PARTITION OF licitaciones FOR VALUES FROM ('2013-
 CREATE TABLE licitaciones_2026 PARTITION OF licitaciones FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
 ```
 
-Ventajas: consultas por año solo tocan la partición correspondiente, `DELETE`/purga por año inmediata y mantenimiento de índices por partición.
+Ventajas: las consultas por año solo tocan la partición correspondiente, `DELETE`/purga por año inmediata y mantenimiento de índices por partición.
 
 ## 5. Mantenimiento
 
-- **VACUUM mensual** para recuperar espacio y refrescar estadísticas del planner:
+- **VACUUM (ANALYZE) mensual** para recuperar espacio y refrescar las estadísticas del planner:
 
 ```sql
 VACUUM (ANALYZE, VERBOSE) licitaciones;
 ```
 
 - **ANALYZE** tras cada carga masiva.
-- Monitorizar tamaño real por tabla:
+- Monitorizar el tamaño real por tabla:
 
 ```sql
 SELECT relname, pg_size_pretty(pg_total_relation_size(relid))
@@ -136,6 +153,8 @@ valencia/contratacion/ (13 archivos, 42 MB)
 
 ## 7. Carga de datos (Parquet a Postgres)
 
+Desde exploración rápida con Pandas:
+
 ```python
 import pandas as pd
 df = pd.read_parquet('nacional/licitaciones_espana.parquet')
@@ -145,7 +164,18 @@ print(df.shape)  # (8700000, 48)
 df.groupby('adjudicatario')['importe_sin_iva'].sum().nlargest(10)
 ```
 
-A Postgres (COPY desde CSV):
+### 7.1 Carga automatizada con `scripts/cargar_parquet.py`
+
+El script del repo crea la tabla a partir del esquema del Parquet y carga por lotes de 250.000 filas con `COPY ... FROM STDIN` en streaming:
+
+```bash
+set PGPASSWORD=tu_password
+python scripts/cargar_parquet.py "nacional\licitaciones_espana.parquet" licitaciones "fecha_publicacion,fecha_adjudicacion" "organo_contratante,nif_adjudicatario,fecha_publicacion"
+```
+
+Argumentos: `archivo.parquet`, `nombre_tabla`, `columnas_fecha` (se convierten con `pd.to_datetime(dayfirst=True)`), `columnas_indice` (se crean al final). Detalle paso a paso en [instalacion-postgresql-dbeaver.md](instalacion-postgresql-dbeaver.md).
+
+A Postgres (flujo manual con COPY desde CSV):
 
 ```sql
 COPY licitaciones(id, expediente, objeto, organo_contratante, importe_sin_iva, fecha_publicacion)
