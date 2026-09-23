@@ -12,9 +12,9 @@
 
 | # | Entregable | Contenido | Responsable principal | Colabora |
 |---|---|---|---|---|
-| 1 | **Volumetría** | Tabla de tamaño real por tabla en PostgreSQL (filas, tamaño, índices) y comparativa con la estimación Parquet (~1,1 GB → ~21,4 GB en SGBD) | Jose | Kerin |
+| 1 | **Volumetría** | Tabla de tamaño real por tabla en PostgreSQL (filas, tamaño, índices) y comparativa con la estimación Parquet (~1,1 GB → ~21,4 GB en SGBD) | Kerin | Jose |
 | 2 | **Modelo lógico-conceptual de la bodega de datos** | Entidades de negocio, relaciones y esquema en estrella (fact + dimensiones) con claves | Kerin | Jose |
-| 3 | **Metodología Medallion** | Explicación y aplicación práctica (capas Bronze / Silver / Gold) al pipeline del proyecto | Kerin | Jose |
+| 3 | **Metodología Medallion** | Explicación y aplicación práctica (capas Bronze / Silver / Gold) al pipeline del proyecto | Jose | Kerin |
 | 4 | **Explicación de los ETL** | Proceso Parquet → PostgreSQL: mapeo de tipos, normalización de fechas, COPY por lotes e índices | Jose | Kerin |
 | 5 | **Fotos de las visualizaciones** | Capturas de pantalla (PNG) del informe Power BI: KPIs, evolución, mapa y fraude | Isabella | - |
 
