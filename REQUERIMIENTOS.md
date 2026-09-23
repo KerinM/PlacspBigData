@@ -8,8 +8,8 @@
 
 | Miembro | Rol | Responsabilidades |
 |---|---|---|
-| **Jose** | ETL / Analista técnico | Extracción, transformación y carga (Parquet -> PostgreSQL) y optimización del pipeline |
-| **Kerin** | Análisis (Analista de datos) | Consultas analíticas de negocio, análisis de calidad de datos y vistas de soporte |
+| **Kerin** | ETL / Analista técnico | Extracción, transformación y carga (Parquet -> PostgreSQL) y optimización del pipeline |
+| **Jose** | Análisis (Analista de datos) | Consultas analíticas de negocio, análisis de calidad de datos y vistas de soporte |
 | **Isabella** | QA + Representación de datos en Power BI | Validación de integridad, KPIs y dashboards en Power BI |
 
 **Reparto:** Jose → RF-01 a RF-06 y RNF-01 a RNF-04 (10) · Kerin → RF-07 a RF-13 y RNF-05 a RNF-07 (10) · Isabella → RF-14 a RF-20 y RNF-08 a RNF-10 (10).
